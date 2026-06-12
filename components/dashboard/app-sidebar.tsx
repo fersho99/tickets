@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -80,9 +81,13 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-5 w-5" />
-          </div>
+          <Image
+            src="/icon-dark-32x32.png"
+            alt="HuntersTrack AI"
+            width={36}
+            height={36}
+            className="rounded-lg"
+          />
           <div className="flex flex-col">
             <span className="text-sm font-semibold">HuntersTrack AI</span>
             <span className="text-xs text-muted-foreground">Sistema de Gestión</span>

@@ -59,6 +59,8 @@ interface DataContextType {
   markNotificacionLeida: (id: string) => Promise<void>
   markAllNotifsLeidas: (userId: string) => Promise<void>
   unreadCount: (userId: string) => number
+  refreshTickets: () => Promise<void>
+  removePerfile: (id: string) => void
 }
 
 const DataContext = createContext<DataContextType | null>(null)
@@ -228,7 +230,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
+    // Realtime: recibir notificaciones nuevas al instante
+    const realtimeChannel = supabase
+      .channel("notifications-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        (payload) => {
+          if (!userIdRef.current) return
+          const row = payload.new as Record<string, unknown>
+          if (row.user_id !== userIdRef.current) return
+          setNotificaciones((prev) => [mapNotif(row), ...prev])
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+      supabase.removeChannel(realtimeChannel)
+    }
   }, [])
 
   // ── Mutations (optimistic — cache synced by the effect above) ──────────────
@@ -307,11 +327,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const unreadCount = (userId: string) =>
     notificaciones.filter((n) => n.user_id === userId && !n.leida).length
 
+  const removePerfile = (id: string) => {
+    setPerfiles((prev) => prev.filter((p) => p.id !== id))
+  }
+
+  const refreshTickets = async () => {
+    if (!userIdRef.current) return
+    const supabase = createClient()
+    const { data } = await supabase
+      .from("tickets")
+      .select("*, solicitante:profiles!solicitante_id(nombre), developer:profiles!developer_id(nombre)")
+      .order("created_at", { ascending: false })
+    if (data) {
+      const newTickets = data.map(mapTicket)
+      setTickets(newTickets)
+    }
+  }
+
   return (
     <DataContext.Provider value={{
       tickets, proyectos, notificaciones, perfiles, developers,
       isLoading, updateTicket, addTicket, updateProyecto, addProyecto,
-      markNotificacionLeida, markAllNotifsLeidas, unreadCount,
+      markNotificacionLeida, markAllNotifsLeidas, unreadCount, refreshTickets, removePerfile,
     }}>
       {children}
     </DataContext.Provider>

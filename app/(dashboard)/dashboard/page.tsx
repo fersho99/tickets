@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts"
 import { useData } from "@/lib/data-context"
-import type { EstadoTicket } from "@/lib/types"
+import type { EstadoTicket, Ticket } from "@/lib/types"
 
 const estadoBadgeStyles: Record<EstadoTicket, string> = {
   en_revision: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
@@ -27,14 +27,26 @@ const estadoLabels: Record<EstadoTicket, string> = {
   cerrado: "Cerrado",
 }
 
-const chartData = [
-  { semana: "S-5", tickets: 3 },
-  { semana: "S-4", tickets: 7 },
-  { semana: "S-3", tickets: 5 },
-  { semana: "S-2", tickets: 9 },
-  { semana: "S-1", tickets: 6 },
-  { semana: "Actual", tickets: 5 },
-]
+function getWeeklyTickets(tickets: Ticket[]) {
+  const now = new Date()
+  const currentMonday = new Date(now)
+  currentMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+  currentMonday.setHours(0, 0, 0, 0)
+
+  return Array.from({ length: 6 }, (_, i) => {
+    const weekStart = new Date(currentMonday)
+    weekStart.setDate(currentMonday.getDate() - (5 - i) * 7)
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekStart.getDate() + 7)
+
+    const count = tickets.filter((t) => {
+      const d = new Date(t.fecha_creacion)
+      return d >= weekStart && d < weekEnd
+    }).length
+
+    return { semana: i === 5 ? "Actual" : `S-${5 - i}`, tickets: count }
+  })
+}
 
 export default function DashboardPage() {
   const { tickets } = useData()
@@ -46,9 +58,11 @@ export default function DashboardPage() {
     corregido: tickets.filter((t) => t.estado === "corregido").length,
   }
 
+  const chartData = getWeeklyTickets(tickets)
+
   const recentTickets = [...tickets]
     .sort((a, b) => b.fecha_actualizacion.localeCompare(a.fecha_actualizacion))
-    .slice(0, 5)
+    .slice(0, 3)
 
   return (
     <div className="space-y-6">

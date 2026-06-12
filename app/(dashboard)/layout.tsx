@@ -11,6 +11,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("returnUrl", window.location.pathname)
+      }
       router.replace("/login")
     }
   }, [user, isLoading, router])

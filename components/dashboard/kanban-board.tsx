@@ -21,7 +21,6 @@ import { useData } from "@/lib/data-context"
 import type { EstadoTicket, Ticket } from "@/lib/types"
 
 const COLUMNS: { id: EstadoTicket; label: string; color: string }[] = [
-  { id: "en_revision", label: "En Revisión", color: "bg-yellow-500" },
   { id: "aprobado", label: "Aprobado", color: "bg-blue-500" },
   { id: "en_progreso", label: "En Progreso", color: "bg-purple-500" },
   { id: "corregido", label: "Corregido", color: "bg-green-500" },
@@ -142,7 +141,7 @@ export function KanbanBoard({ userId }: { userId: string }) {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         {COLUMNS.map((col) => {
           const colTickets = myTickets.filter((t) => t.estado === col.id)
           return (

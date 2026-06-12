@@ -56,13 +56,14 @@ const getInitials = (name: string) =>
 
 export default function ConfiguracionPage() {
   const { user } = useAuth()
-  const { perfiles } = useData()
+  const { perfiles, removePerfile } = useData()
   const router = useRouter()
   const canManageTeam = user?.rol === "lider_ti" || user?.rol === "admin"
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activationLink, setActivationLink] = useState<string | null>(null)
   const [linkCopied, setLinkCopied] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
@@ -121,13 +122,19 @@ export default function ConfiguracionPage() {
 
   const onEliminarUsuario = async () => {
     if (!deleteTarget) return
-    await fetch("/api/users", {
+    setDeleteError(null)
+    const res = await fetch("/api/users", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: deleteTarget.id }),
     })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      setDeleteError(json.error ?? "Error al eliminar el usuario")
+      return
+    }
+    removePerfile(deleteTarget.id)
     setDeleteTarget(null)
-    router.refresh()
   }
 
   return (
@@ -348,7 +355,7 @@ export default function ConfiguracionPage() {
       </Card>}
 
       {/* Confirmar eliminación — solo visible para quienes pueden gestionar equipo */}
-      {canManageTeam && <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+      {canManageTeam && <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setDeleteError(null) } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar a {deleteTarget?.nombre}?</AlertDialogTitle>
@@ -356,6 +363,11 @@ export default function ConfiguracionPage() {
               Esta acción eliminará la cuenta permanentemente. No se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-xs text-destructive rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+              {deleteError}
+            </p>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction

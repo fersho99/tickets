@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, CheckCheck } from "lucide-react"
+import { Bell, CheckCheck, Ticket, FolderKanban } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -13,6 +13,17 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/lib/auth-context"
 import { useData } from "@/lib/data-context"
+import Link from "next/link"
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "ahora"
+  if (mins < 60) return `hace ${mins} min`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `hace ${hrs} h`
+  return `hace ${Math.floor(hrs / 24)} d`
+}
 
 export function NotificationsPanel() {
   const { user } = useAuth()
@@ -58,30 +69,53 @@ export function NotificationsPanel() {
             </p>
           ) : (
             <div className="space-y-2">
-              {userNotifs.map((notif) => (
-                <button
-                  key={notif.id}
-                  onClick={() => markNotificacionLeida(notif.id)}
-                  className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 ${
-                    notif.leida ? "opacity-60" : "border-primary/20 bg-primary/5"
-                  }`}
-                >
+              {userNotifs.map((notif) => {
+                const href = notif.referencia_tipo === "ticket" && notif.referencia_id
+                  ? `/tickets/${notif.referencia_id}`
+                  : notif.referencia_tipo === "project" && notif.referencia_id
+                  ? `/proyectos/${notif.referencia_id}`
+                  : null
+
+                const inner = (
                   <div className="flex items-start gap-2">
                     {!notif.leida && (
                       <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                     )}
-                    <div className={!notif.leida ? "" : "pl-4"}>
+                    <div className={!notif.leida ? "flex-1 min-w-0" : "pl-4 flex-1 min-w-0"}>
                       <p className="text-sm font-medium">{notif.titulo}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="mt-0.5 text-xs text-muted-foreground truncate">
                         {notif.mensaje}
                       </p>
                       <p className="mt-1 text-[10px] text-muted-foreground">
-                        {notif.fecha_creacion}
+                        {timeAgo(notif.fecha_creacion)}
                       </p>
                     </div>
                   </div>
-                </button>
-              ))}
+                )
+
+                return href ? (
+                  <Link
+                    key={notif.id}
+                    href={href}
+                    onClick={() => markNotificacionLeida(notif.id)}
+                    className={`block rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 ${
+                      notif.leida ? "opacity-60" : "border-primary/20 bg-primary/5"
+                    }`}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <button
+                    key={notif.id}
+                    onClick={() => markNotificacionLeida(notif.id)}
+                    className={`w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 ${
+                      notif.leida ? "opacity-60" : "border-primary/20 bg-primary/5"
+                    }`}
+                  >
+                    {inner}
+                  </button>
+                )
+              })}
             </div>
           )}
         </ScrollArea>

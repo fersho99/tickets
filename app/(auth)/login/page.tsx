@@ -18,7 +18,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace(ROLE_HOME[user.rol] ?? "/dashboard")
+      const returnUrl = typeof window !== "undefined"
+        ? sessionStorage.getItem("returnUrl")
+        : null
+      if (returnUrl) sessionStorage.removeItem("returnUrl")
+      router.replace(returnUrl ?? ROLE_HOME[user.rol] ?? "/dashboard")
     }
   }, [user, isLoading, router])
 

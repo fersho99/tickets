@@ -58,51 +58,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true
     const supabase = createClient()
-    let initialAuthDone = false
 
+    // Use getSession() for initial load — reads from storage without waiting for token refresh events
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return
+      if (session?.user) {
+        const profile = await fetchProfile(supabase, session.user.id)
+        if (mounted) setUser(profile)
+      }
+      if (mounted) setIsLoading(false)
+    })
+
+    // Listen only for subsequent auth changes — ignore INITIAL_SESSION (handled above)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return
-
-        // Explicit sign-out — always clear user
-        if (event === "SIGNED_OUT" || !session?.user) {
+        if (event === "SIGNED_OUT") {
           setUser(null)
-          setIsLoading(false)
-          initialAuthDone = true
           return
         }
-
-        const profile = await fetchProfile(supabase, session.user.id)
-        if (!mounted) return
-
-        if (profile) {
-          // Profile loaded successfully — always update
-          setUser(profile)
-        } else if (!initialAuthDone) {
-          // Initial load failed to fetch profile — clear user so guard redirects to login
-          setUser(null)
+        if (event === "SIGNED_IN" && session?.user) {
+          const profile = await fetchProfile(supabase, session.user.id)
+          if (mounted && profile) setUser(profile)
         }
-        // TOKEN_REFRESHED + failed fetch → keep existing user, don't redirect
-
-        if (!initialAuthDone) {
-          setIsLoading(false)
-          initialAuthDone = true
-        }
+        // TOKEN_REFRESHED / INITIAL_SESSION → keep existing user state
       }
     )
-
-    // Safety timeout — only if auth state never fires at all (network totally down)
-    const timeout = setTimeout(() => {
-      if (mounted && !initialAuthDone) {
-        setIsLoading(false)
-        initialAuthDone = true
-      }
-    }, 5000)
 
     return () => {
       mounted = false
       subscription.unsubscribe()
-      clearTimeout(timeout)
     }
   }, [])
 
