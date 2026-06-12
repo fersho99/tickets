@@ -73,24 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event) => {
         if (!mounted) return
+        // Only react to explicit sign-out — SIGNED_IN is handled by getSession() on mount
+        // and by login() after signInWithPassword. Handling SIGNED_IN here causes a
+        // re-render loop because the middleware refreshes the token on every request.
         if (event === "SIGNED_OUT") {
           loadedUidRef.current = null
           setUser(null)
-          return
         }
-        if (event === "SIGNED_IN" && session?.user) {
-          // Skip if this user is already loaded — prevents re-render loop caused by
-          // the middleware refreshing the token on every request (triggers SIGNED_IN again)
-          if (loadedUidRef.current === session.user.id) return
-          const profile = await fetchProfile(supabase, session.user.id)
-          if (mounted && profile) {
-            loadedUidRef.current = profile.id
-            setUser(profile)
-          }
-        }
-        // TOKEN_REFRESHED / INITIAL_SESSION → no action needed
       }
     )
 
@@ -100,13 +91,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Only calls signInWithPassword — navigation is handled by LoginPage's useEffect
-  // when it detects user is set. This avoids a double-navigation race condition.
   const login = async (email: string, password: string): Promise<string | null> => {
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      return error ? error.message : null
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) return error.message
+      if (data.user) {
+        const profile = await fetchProfile(supabase, data.user.id)
+        if (profile) {
+          loadedUidRef.current = profile.id
+          setUser(profile)
+        }
+      }
+      return null
     } catch (e) {
       return e instanceof Error ? e.message : "Error al iniciar sesión"
     }
