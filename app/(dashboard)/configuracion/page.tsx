@@ -225,7 +225,7 @@ export default function ConfiguracionPage() {
                 Nuevo miembro
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md w-full">
               {activationLink ? (
                 /* Step 2 — show activation link */
                 <>
@@ -239,9 +239,9 @@ export default function ConfiguracionPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-3 py-2">
-                    <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 overflow-hidden">
+                    <div className="grid grid-cols-[auto_1fr] items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2">
                       <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{activationLink}</p>
+                      <p className="truncate text-xs text-muted-foreground">{activationLink}</p>
                     </div>
                     <Button className="w-full gap-2" onClick={handleCopyLink}>
                       {linkCopied ? <><Check className="h-4 w-4" />Copiado</> : <><Copy className="h-4 w-4" />Copiar enlace</>}
