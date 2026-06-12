@@ -38,11 +38,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Redirigir si la ruta es exclusiva de otro rol
     const requiredRole = EXCLUSIVE[pathname]
-    console.log("[layout guard]", { pathname, rol: user.rol, requiredRole })
     if (requiredRole && user.rol !== requiredRole) {
-      console.log("[layout guard] redirigiendo a", ROLE_HOME[user.rol])
       router.replace(ROLE_HOME[user.rol])
     }
   }, [user, isLoading, pathname, router])

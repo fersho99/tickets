@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { Perfil, UserRole } from "./types"
 import { createClient } from "./supabase"
@@ -54,38 +54,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Perfil | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const loadedUidRef = useRef<string | null>(null)
 
   useEffect(() => {
     let mounted = true
     const supabase = createClient()
 
-    // Use getSession() for initial load — reads from storage without waiting for token refresh events
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return
-      console.log("[auth] getSession uid:", session?.user?.id ?? "null")
       if (session?.user) {
         const profile = await fetchProfile(supabase, session.user.id)
-        console.log("[auth] getSession profile:", profile?.rol ?? "null")
-        if (mounted) setUser(profile)
+        if (mounted) {
+          loadedUidRef.current = profile?.id ?? null
+          setUser(profile)
+        }
       }
       if (mounted) setIsLoading(false)
     })
 
-    // Listen only for subsequent auth changes — ignore INITIAL_SESSION (handled above)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return
-        console.log("[auth] onAuthStateChange event:", event, "uid:", session?.user?.id ?? "null")
         if (event === "SIGNED_OUT") {
+          loadedUidRef.current = null
           setUser(null)
           return
         }
         if (event === "SIGNED_IN" && session?.user) {
+          // Skip if this user is already loaded — prevents re-render loop caused by
+          // the middleware refreshing the token on every request (triggers SIGNED_IN again)
+          if (loadedUidRef.current === session.user.id) return
           const profile = await fetchProfile(supabase, session.user.id)
-          console.log("[auth] SIGNED_IN profile:", profile?.rol ?? "null")
-          if (mounted && profile) setUser(profile)
+          if (mounted && profile) {
+            loadedUidRef.current = profile.id
+            setUser(profile)
+          }
         }
-        // TOKEN_REFRESHED / INITIAL_SESSION → keep existing user state
+        // TOKEN_REFRESHED / INITIAL_SESSION → no action needed
       }
     )
 
