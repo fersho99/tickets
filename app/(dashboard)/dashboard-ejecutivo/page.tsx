@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, Sparkles, CheckCircle2, XCircle, FolderKanban, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,7 +17,6 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { useData } from "@/lib/data-context"
-import { useAuth } from "@/lib/auth-context"
 import type { EstadoProyecto } from "@/lib/types"
 
 const estadoLabels: Record<EstadoProyecto, string> = {
@@ -36,23 +33,8 @@ const estadoBadgeStyles: Record<EstadoProyecto, string> = {
   cancelado: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
 }
 
-const ROLE_HOME: Record<string, string> = {
-  lider_ti: "/dashboard",
-  admin: "/dashboard-ejecutivo",
-  developer: "/mi-tablero",
-  staff: "/mis-solicitudes",
-}
-
 export default function DashboardEjecutivoPage() {
   const { proyectos, updateProyecto, tickets } = useData()
-  const { user: authUser } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (authUser && authUser.rol !== "admin") {
-      router.replace(ROLE_HOME[authUser.rol] ?? "/dashboard")
-    }
-  }, [authUser, router])
 
   const chartData = proyectos.slice(0, 6).map((p) => ({
     name: p.nombre.length > 16 ? p.nombre.slice(0, 14) + "…" : p.nombre,

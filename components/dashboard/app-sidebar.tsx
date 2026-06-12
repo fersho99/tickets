@@ -101,7 +101,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {filteredItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"))
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton

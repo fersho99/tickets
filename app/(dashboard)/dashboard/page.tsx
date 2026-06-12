@@ -1,8 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { AlertCircle, CheckCircle, Clock, Users, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +9,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts"
 import { useData } from "@/lib/data-context"
-import { useAuth } from "@/lib/auth-context"
 import type { EstadoTicket, Ticket } from "@/lib/types"
 
 const estadoBadgeStyles: Record<EstadoTicket, string> = {
@@ -51,23 +48,8 @@ function getWeeklyTickets(tickets: Ticket[]) {
   })
 }
 
-const ROLE_HOME: Record<string, string> = {
-  lider_ti: "/dashboard",
-  admin: "/dashboard-ejecutivo",
-  developer: "/mi-tablero",
-  staff: "/mis-solicitudes",
-}
-
 export default function DashboardPage() {
   const { tickets } = useData()
-  const { user: authUser } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (authUser && authUser.rol !== "lider_ti") {
-      router.replace(ROLE_HOME[authUser.rol] ?? "/dashboard")
-    }
-  }, [authUser, router])
 
   const stats = {
     total: tickets.length,

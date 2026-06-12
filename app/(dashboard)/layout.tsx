@@ -1,22 +1,49 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import type { UserRole } from "@/lib/types"
+
+const ROLE_HOME: Record<UserRole, string> = {
+  lider_ti: "/dashboard",
+  admin: "/dashboard-ejecutivo",
+  developer: "/mi-tablero",
+  staff: "/mis-solicitudes",
+}
+
+// Rutas exclusivas de un solo rol
+const EXCLUSIVE: Record<string, UserRole> = {
+  "/dashboard": "lider_ti",
+  "/dashboard-ejecutivo": "admin",
+  "/mi-tablero": "developer",
+  "/mis-solicitudes": "staff",
+  "/nuevo-ticket": "staff",
+}
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (isLoading) return
+
+    if (!user) {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("returnUrl", window.location.pathname)
       }
       router.replace("/login")
+      return
     }
-  }, [user, isLoading, router])
+
+    // Redirigir si la ruta es exclusiva de otro rol
+    const requiredRole = EXCLUSIVE[pathname]
+    if (requiredRole && user.rol !== requiredRole) {
+      router.replace(ROLE_HOME[user.rol])
+    }
+  }, [user, isLoading, pathname, router])
 
   if (isLoading) {
     return (
