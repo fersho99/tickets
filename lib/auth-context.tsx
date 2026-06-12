@@ -62,8 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Use getSession() for initial load — reads from storage without waiting for token refresh events
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return
+      console.log("[auth] getSession uid:", session?.user?.id ?? "null")
       if (session?.user) {
         const profile = await fetchProfile(supabase, session.user.id)
+        console.log("[auth] getSession profile:", profile?.rol ?? "null")
         if (mounted) setUser(profile)
       }
       if (mounted) setIsLoading(false)
@@ -73,12 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return
+        console.log("[auth] onAuthStateChange event:", event, "uid:", session?.user?.id ?? "null")
         if (event === "SIGNED_OUT") {
           setUser(null)
           return
         }
         if (event === "SIGNED_IN" && session?.user) {
           const profile = await fetchProfile(supabase, session.user.id)
+          console.log("[auth] SIGNED_IN profile:", profile?.rol ?? "null")
           if (mounted && profile) setUser(profile)
         }
         // TOKEN_REFRESHED / INITIAL_SESSION → keep existing user state
