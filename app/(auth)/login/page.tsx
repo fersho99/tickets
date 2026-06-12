@@ -18,11 +18,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
+      const home = ROLE_HOME[user.rol] ?? "/dashboard"
       const returnUrl = typeof window !== "undefined"
         ? sessionStorage.getItem("returnUrl")
         : null
       if (returnUrl) sessionStorage.removeItem("returnUrl")
-      router.replace(returnUrl ?? ROLE_HOME[user.rol] ?? "/dashboard")
+      // Only use returnUrl if it doesn't belong to another role's home
+      const otherHomes = Object.values(ROLE_HOME).filter((r) => r !== home)
+      const safeReturn = returnUrl && !otherHomes.includes(returnUrl) ? returnUrl : null
+      router.replace(safeReturn ?? home)
     }
   }, [user, isLoading, router])
 
