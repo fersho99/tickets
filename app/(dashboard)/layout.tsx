@@ -40,7 +40,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     const requiredRole = EXCLUSIVE[pathname]
     if (requiredRole && user.rol !== requiredRole) {
-      router.replace(ROLE_HOME[user.rol])
+      window.location.replace(ROLE_HOME[user.rol])
     }
   }, [user, isLoading, pathname, router])
 
