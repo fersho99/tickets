@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   FolderKanban,
@@ -40,93 +42,31 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    href: "#dashboard",
-    roles: ["lider_ti", "admin"],
-  },
-  {
-    title: "Dashboard Ejecutivo",
-    icon: BarChart3,
-    href: "#dashboard-ejecutivo",
-    roles: ["admin"],
-  },
-  {
-    title: "Proyectos",
-    icon: FolderKanban,
-    href: "#proyectos",
-    roles: ["lider_ti", "admin"],
-  },
-  {
-    title: "Mis Proyectos",
-    icon: FolderKanban,
-    href: "#mis-proyectos",
-    roles: ["developer"],
-  },
-  {
-    title: "Tickets",
-    icon: Ticket,
-    href: "#tickets",
-    roles: ["lider_ti"],
-  },
-  {
-    title: "Mi Tablero",
-    icon: KanbanSquare,
-    href: "#mi-tablero",
-    roles: ["developer"],
-  },
-  {
-    title: "Mis Solicitudes",
-    icon: Ticket,
-    href: "#mis-solicitudes",
-    roles: ["staff"],
-  },
-  {
-    title: "Nuevo Ticket",
-    icon: MessageSquarePlus,
-    href: "#nuevo-ticket",
-    roles: ["staff"],
-    highlight: true,
-  },
-  {
-    title: "Asignar Tareas",
-    icon: Users,
-    href: "#asignar-tareas",
-    roles: ["lider_ti"],
-  },
-  {
-    title: "Reportes IA",
-    icon: Sparkles,
-    href: "#reportes-ia",
-    roles: ["admin"],
-  },
-  {
-    title: "Configuración",
-    icon: Settings,
-    href: "#configuracion",
-    roles: ["lider_ti"],
-  },
+  { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard", roles: ["lider_ti"] },
+  { title: "Dashboard Ejecutivo", icon: BarChart3, href: "/dashboard-ejecutivo", roles: ["admin"] },
+  { title: "Proyectos", icon: FolderKanban, href: "/proyectos", roles: ["lider_ti", "admin"] },
+  { title: "Mis Proyectos", icon: FolderKanban, href: "/mis-proyectos", roles: ["developer"] },
+  { title: "Tickets", icon: Ticket, href: "/tickets", roles: ["lider_ti"] },
+  { title: "Mi Tablero", icon: KanbanSquare, href: "/mi-tablero", roles: ["developer"] },
+  { title: "Mis Solicitudes", icon: Ticket, href: "/mis-solicitudes", roles: ["staff"] },
+  { title: "Nuevo Ticket", icon: MessageSquarePlus, href: "/nuevo-ticket", roles: ["staff"], highlight: true },
+  { title: "Asignar Tareas", icon: Users, href: "/asignar-tareas", roles: ["lider_ti"] },
+  { title: "Reportes IA", icon: Sparkles, href: "/reportes-ia", roles: ["admin"] },
+  { title: "Configuración", icon: Settings, href: "/configuracion", roles: ["lider_ti", "admin", "developer", "staff"] },
 ]
 
 export function AppSidebar() {
   const { user, logout } = useAuth()
+  const pathname = usePathname()
 
   if (!user) return null
 
-  const filteredItems = navItems.filter((item) =>
-    item.roles.includes(user.rol)
-  )
+  const filteredItems = navItems.filter((item) => item.roles.includes(user.rol))
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-  }
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).join("").toUpperCase()
 
-  const getRoleLabel = (rol: UserRole) => {
+  const getRoleLabel = (rol: UserRole): string => {
     const labels: Record<UserRole, string> = {
       lider_ti: "Líder de TI",
       admin: "Administrador",
@@ -145,9 +85,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-semibold">HuntersTrack AI</span>
-            <span className="text-xs text-muted-foreground">
-              Sistema de Gestión
-            </span>
+            <span className="text-xs text-muted-foreground">Sistema de Gestión</span>
           </div>
         </div>
       </SidebarHeader>
@@ -157,23 +95,27 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navegación</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className={
-                      item.highlight
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-                        : ""
-                    }
-                  >
-                    <a href={item.href}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {filteredItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={
+                        item.highlight && !isActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                          : ""
+                      }
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

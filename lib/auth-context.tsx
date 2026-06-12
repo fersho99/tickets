@@ -1,33 +1,134 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import type { Perfil, UserRole } from "./types"
-import { mockPerfiles } from "./mock-data"
+import { createClient } from "./supabase"
 
 interface AuthContextType {
   user: Perfil | null
-  login: (role: UserRole) => void
-  logout: () => void
+  login: (email: string, password: string) => Promise<string | null>
+  logout: () => Promise<void>
+  isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+const ROLE_HOME: Record<UserRole, string> = {
+  lider_ti: "/dashboard",
+  admin: "/dashboard-ejecutivo",
+  developer: "/mi-tablero",
+  staff: "/mis-solicitudes",
+}
+
+async function fetchProfile(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<Perfil | null> {
+  try {
+    const timeoutPromise = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 6000)
+    )
+    const queryPromise = supabase
+      .from("profiles")
+      .select("id, nombre, email, rol, avatar_url")
+      .eq("id", userId)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) return null
+        return {
+          id: data.id as string,
+          nombre: data.nombre as string,
+          email: data.email as string,
+          rol: data.rol as UserRole,
+          avatar: (data.avatar_url as string) ?? undefined,
+        } satisfies Perfil
+      })
+    return await Promise.race([queryPromise, timeoutPromise])
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Perfil | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
-  const login = (role: UserRole) => {
-    const userByRole = mockPerfiles.find((p) => p.rol === role)
-    if (userByRole) {
-      setUser(userByRole)
+  useEffect(() => {
+    let mounted = true
+    const supabase = createClient()
+    let initialAuthDone = false
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return
+
+        // Explicit sign-out — always clear user
+        if (event === "SIGNED_OUT" || !session?.user) {
+          setUser(null)
+          setIsLoading(false)
+          initialAuthDone = true
+          return
+        }
+
+        const profile = await fetchProfile(supabase, session.user.id)
+        if (!mounted) return
+
+        if (profile) {
+          // Profile loaded successfully — always update
+          setUser(profile)
+        } else if (!initialAuthDone) {
+          // Initial load failed to fetch profile — clear user so guard redirects to login
+          setUser(null)
+        }
+        // TOKEN_REFRESHED + failed fetch → keep existing user, don't redirect
+
+        if (!initialAuthDone) {
+          setIsLoading(false)
+          initialAuthDone = true
+        }
+      }
+    )
+
+    // Safety timeout — only if auth state never fires at all (network totally down)
+    const timeout = setTimeout(() => {
+      if (mounted && !initialAuthDone) {
+        setIsLoading(false)
+        initialAuthDone = true
+      }
+    }, 5000)
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
+  }, [])
+
+  // Only calls signInWithPassword — navigation is handled by LoginPage's useEffect
+  // when it detects user is set. This avoids a double-navigation race condition.
+  const login = async (email: string, password: string): Promise<string | null> => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      return error ? error.message : null
+    } catch (e) {
+      return e instanceof Error ? e.message : "Error al iniciar sesión"
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+    } catch {}
     setUser(null)
+    router.push("/login")
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )
@@ -35,8 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider")
   return context
 }

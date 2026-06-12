@@ -1,31 +1,29 @@
 "use client"
 
-import { AuthProvider, useAuth } from "@/lib/auth-context"
-import { ThemeProvider } from "@/components/theme-provider"
-import { LoginScreen } from "@/components/dashboard/login-screen"
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 
-function AppContent() {
-  const { user } = useAuth()
-
-  if (!user) {
-    return <LoginScreen />
-  }
-
-  return <DashboardLayout />
+const ROLE_HOME: Record<string, string> = {
+  lider_ti: "/dashboard",
+  admin: "/dashboard-ejecutivo",
+  developer: "/mi-tablero",
+  staff: "/mis-solicitudes",
 }
 
 export default function Home() {
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
-  )
+  const { user, isLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (user) {
+        router.replace(ROLE_HOME[user.rol] ?? "/dashboard")
+      } else {
+        router.replace("/login")
+      }
+    }
+  }, [user, isLoading, router])
+
+  return null
 }

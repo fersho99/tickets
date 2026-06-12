@@ -1,42 +1,12 @@
-import type { Perfil, Proyecto, Ticket } from "./types"
+import type { Perfil, Proyecto, Ticket, Notificacion, Comentario } from "./types"
 
 export const mockPerfiles: Perfil[] = [
-  {
-    id: "1",
-    nombre: "Carlos Mendoza",
-    email: "carlos@hunterstrack.com",
-    rol: "lider_ti",
-  },
-  {
-    id: "2",
-    nombre: "María García",
-    email: "maria@hunterstrack.com",
-    rol: "admin",
-  },
-  {
-    id: "3",
-    nombre: "Juan Pérez",
-    email: "juan@hunterstrack.com",
-    rol: "developer",
-  },
-  {
-    id: "4",
-    nombre: "Ana López",
-    email: "ana@hunterstrack.com",
-    rol: "developer",
-  },
-  {
-    id: "5",
-    nombre: "Roberto Sánchez",
-    email: "roberto@hunterstrack.com",
-    rol: "staff",
-  },
-  {
-    id: "6",
-    nombre: "Laura Martínez",
-    email: "laura@hunterstrack.com",
-    rol: "staff",
-  },
+  { id: "1", nombre: "Carlos Mendoza", email: "carlos@hunterstrack.com", rol: "lider_ti" },
+  { id: "2", nombre: "María García", email: "maria@hunterstrack.com", rol: "admin" },
+  { id: "3", nombre: "Juan Pérez", email: "juan@hunterstrack.com", rol: "developer" },
+  { id: "4", nombre: "Ana López", email: "ana@hunterstrack.com", rol: "developer" },
+  { id: "5", nombre: "Roberto Sánchez", email: "roberto@hunterstrack.com", rol: "staff" },
+  { id: "6", nombre: "Laura Martínez", email: "laura@hunterstrack.com", rol: "staff" },
 ]
 
 export const mockProyectos: Proyecto[] = [
@@ -48,6 +18,7 @@ export const mockProyectos: Proyecto[] = [
     progreso: 75,
     aprobacion_ti: true,
     aprobacion_negocio: true,
+    created_by: "1",
     fecha_creacion: "2024-01-15",
     fecha_actualizacion: "2024-03-10",
   },
@@ -59,6 +30,7 @@ export const mockProyectos: Proyecto[] = [
     progreso: 45,
     aprobacion_ti: true,
     aprobacion_negocio: false,
+    created_by: "1",
     fecha_creacion: "2024-02-01",
     fecha_actualizacion: "2024-03-08",
   },
@@ -70,6 +42,7 @@ export const mockProyectos: Proyecto[] = [
     progreso: 10,
     aprobacion_ti: false,
     aprobacion_negocio: false,
+    created_by: "1",
     fecha_creacion: "2024-03-01",
     fecha_actualizacion: "2024-03-05",
   },
@@ -81,6 +54,7 @@ export const mockProyectos: Proyecto[] = [
     progreso: 90,
     aprobacion_ti: true,
     aprobacion_negocio: true,
+    created_by: "1",
     fecha_creacion: "2023-11-20",
     fecha_actualizacion: "2024-03-12",
   },
@@ -90,9 +64,10 @@ export const mockTickets: Ticket[] = [
   {
     id: "t1",
     titulo: "Error en login de usuarios",
-    descripcion: "Los usuarios reportan problemas al iniciar sesión después de las 6pm",
+    descripcion: "Los usuarios reportan problemas al iniciar sesión después de las 6pm. El error aparece intermitentemente y afecta a varios usuarios simultáneamente.",
     tipo: "soporte",
     estado: "en_revision",
+    prioridad: 1,
     solicitante_id: "5",
     solicitante_nombre: "Roberto Sánchez",
     fecha_creacion: "2024-03-10",
@@ -101,9 +76,10 @@ export const mockTickets: Ticket[] = [
   {
     id: "t2",
     titulo: "Actualizar módulo de reportes",
-    descripcion: "Se requiere agregar nuevos filtros al módulo de reportes financieros",
+    descripcion: "Se requiere agregar nuevos filtros al módulo de reportes financieros para incluir rangos de fecha personalizados.",
     tipo: "mantenimiento",
     estado: "aprobado",
+    prioridad: 2,
     solicitante_id: "6",
     solicitante_nombre: "Laura Martínez",
     developer_id: "3",
@@ -114,9 +90,10 @@ export const mockTickets: Ticket[] = [
   {
     id: "t3",
     titulo: "Lentitud en carga de dashboard",
-    descripcion: "El dashboard principal tarda más de 10 segundos en cargar",
+    descripcion: "El dashboard principal tarda más de 10 segundos en cargar, lo que afecta la productividad del equipo.",
     tipo: "soporte",
     estado: "en_progreso",
+    prioridad: 1,
     solicitante_id: "5",
     solicitante_nombre: "Roberto Sánchez",
     developer_id: "4",
@@ -128,9 +105,10 @@ export const mockTickets: Ticket[] = [
   {
     id: "t4",
     titulo: "Migración de base de datos",
-    descripcion: "Necesario migrar datos históricos al nuevo servidor",
+    descripcion: "Necesario migrar datos históricos al nuevo servidor de producción antes del cierre de Q1.",
     tipo: "mantenimiento",
     estado: "corregido",
+    prioridad: 2,
     solicitante_id: "6",
     solicitante_nombre: "Laura Martínez",
     developer_id: "3",
@@ -141,14 +119,94 @@ export const mockTickets: Ticket[] = [
   {
     id: "t5",
     titulo: "Nuevo formulario de contacto",
-    descripcion: "Implementar formulario de contacto con validaciones",
+    descripcion: "Implementar formulario de contacto con validaciones en la página principal del portal.",
     tipo: "mantenimiento",
     estado: "en_revision",
+    prioridad: 3,
     solicitante_id: "5",
     solicitante_nombre: "Roberto Sánchez",
     fecha_creacion: "2024-03-12",
     fecha_actualizacion: "2024-03-12",
   },
+  {
+    id: "t6",
+    titulo: "Integración con API de pagos",
+    descripcion: "Conectar el módulo de facturación con la nueva API de Stripe para pagos recurrentes.",
+    tipo: "mantenimiento",
+    estado: "aprobado",
+    prioridad: 1,
+    solicitante_id: "6",
+    solicitante_nombre: "Laura Martínez",
+    developer_id: "4",
+    developer_nombre: "Ana López",
+    proyecto_id: "p1",
+    fecha_creacion: "2024-03-13",
+    fecha_actualizacion: "2024-03-13",
+  },
+]
+
+export const mockComentarios: Comentario[] = [
+  {
+    id: "c1",
+    ticket_id: "t3",
+    author_id: "4",
+    author_nombre: "Ana López",
+    contenido: "He identificado el problema: hay una consulta SQL sin índice que tarda demasiado. Estoy optimizando.",
+    fecha_creacion: "2024-03-11",
+  },
+  {
+    id: "c2",
+    ticket_id: "t3",
+    author_id: "1",
+    author_nombre: "Carlos Mendoza",
+    contenido: "Gracias Ana. Sigue la prioridad alta en este ticket.",
+    fecha_creacion: "2024-03-11",
+  },
+  {
+    id: "c3",
+    ticket_id: "t2",
+    author_id: "3",
+    author_nombre: "Juan Pérez",
+    contenido: "Revisé los requerimientos. Los nuevos filtros se pueden implementar en 2 días.",
+    fecha_creacion: "2024-03-09",
+  },
+]
+
+export const mockNotificaciones: Notificacion[] = [
+  {
+    id: "n1",
+    user_id: "3",
+    titulo: "Ticket asignado",
+    mensaje: 'Se te asignó el ticket "Actualizar módulo de reportes"',
+    leida: false,
+    tipo: "ticket_asignado",
+    referencia_id: "t2",
+    referencia_tipo: "ticket",
+    fecha_creacion: "2024-03-09",
+  },
+  {
+    id: "n2",
+    user_id: "4",
+    titulo: "Ticket asignado",
+    mensaje: 'Se te asignó el ticket "Integración con API de pagos"',
+    leida: false,
+    tipo: "ticket_asignado",
+    referencia_id: "t6",
+    referencia_tipo: "ticket",
+    fecha_creacion: "2024-03-13",
+  },
+  {
+    id: "n3",
+    user_id: "5",
+    titulo: "Ticket aprobado",
+    mensaje: 'Tu ticket "Error en login de usuarios" está en revisión',
+    leida: true,
+    tipo: "ticket_aprobado",
+    referencia_id: "t1",
+    referencia_tipo: "ticket",
+    fecha_creacion: "2024-03-10",
+  },
 ]
 
 export const getDevelopers = () => mockPerfiles.filter((p) => p.rol === "developer")
+export const getStaff = () => mockPerfiles.filter((p) => p.rol === "staff")
