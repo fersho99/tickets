@@ -8,22 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { useData } from "@/lib/data-context"
 import type { EstadoTicket } from "@/lib/types"
-
-const estadoBadgeStyles: Record<EstadoTicket, string> = {
-  en_revision: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-  aprobado: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  en_progreso: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  corregido: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  cerrado: "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/20",
-}
-
-const estadoLabels: Record<EstadoTicket, string> = {
-  en_revision: "En Revisión",
-  aprobado: "Aprobado",
-  en_progreso: "En Progreso",
-  corregido: "Corregido",
-  cerrado: "Cerrado",
-}
+import { ticketEstadoBadge, ticketEstadoLabel } from "@/lib/constants"
 
 // Load indicator: color based on number of active tickets
 function loadColor(count: number) {
@@ -156,8 +141,8 @@ export default function AsignarTareasPage() {
                       <TableCell>{ticket.solicitante_nombre}</TableCell>
                       <TableCell className="capitalize">{ticket.tipo}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={estadoBadgeStyles[ticket.estado]}>
-                          {estadoLabels[ticket.estado]}
+                        <Badge variant="outline" className={ticketEstadoBadge[ticket.estado]}>
+                          {ticketEstadoLabel[ticket.estado]}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -215,8 +200,8 @@ export default function AsignarTareasPage() {
                       </TableCell>
                       <TableCell>{ticket.developer_nombre}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={estadoBadgeStyles[ticket.estado]}>
-                          {estadoLabels[ticket.estado]}
+                        <Badge variant="outline" className={ticketEstadoBadge[ticket.estado]}>
+                          {ticketEstadoLabel[ticket.estado]}
                         </Badge>
                       </TableCell>
                       <TableCell>

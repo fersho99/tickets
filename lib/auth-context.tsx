@@ -1,9 +1,10 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { Perfil, UserRole } from "./types"
 import { createClient } from "./supabase"
+import { ROLE_HOME } from "./routes"
 
 interface AuthContextType {
   user: Perfil | null
@@ -13,13 +14,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
-
-const ROLE_HOME: Record<UserRole, string> = {
-  lider_ti: "/dashboard",
-  admin: "/dashboard-ejecutivo",
-  developer: "/mi-tablero",
-  staff: "/mis-solicitudes",
-}
 
 async function fetchProfile(
   supabase: ReturnType<typeof createClient>,
@@ -54,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Perfil | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const loadedUidRef = useRef<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -64,26 +57,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return
       if (session?.user) {
         const profile = await fetchProfile(supabase, session.user.id)
-        if (mounted) {
-          loadedUidRef.current = profile?.id ?? null
-          setUser(profile)
-        }
+        if (mounted) setUser(profile)
       }
       if (mounted) setIsLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (!mounted) return
-        // Only react to explicit sign-out — SIGNED_IN is handled by getSession() on mount
-        // and by login() after signInWithPassword. Handling SIGNED_IN here causes a
-        // re-render loop because the middleware refreshes the token on every request.
-        if (event === "SIGNED_OUT") {
-          loadedUidRef.current = null
-          setUser(null)
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (!mounted) return
+      // Only react to explicit sign-out. SIGNED_IN is handled by getSession() on mount
+      // and by login() directly — handling it here caused a re-render loop because the
+      // middleware refreshes the token on every request, firing SIGNED_IN repeatedly.
+      if (event === "SIGNED_OUT") {
+        setUser(null)
       }
-    )
+    })
 
     return () => {
       mounted = false
@@ -98,10 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) return error.message
       if (data.user) {
         const profile = await fetchProfile(supabase, data.user.id)
-        if (profile) {
-          loadedUidRef.current = profile.id
-          setUser(profile)
-        }
+        if (profile) setUser(profile)
       }
       return null
     } catch (e) {

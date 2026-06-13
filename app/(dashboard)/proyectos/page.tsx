@@ -24,28 +24,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useData } from "@/lib/data-context"
 import { useAuth } from "@/lib/auth-context"
-import type { EstadoProyecto } from "@/lib/types"
-
-const estadoLabels: Record<EstadoProyecto, string> = {
-  propuesta: "Propuesta",
-  en_desarrollo: "En Desarrollo",
-  completado: "Completado",
-  cancelado: "Cancelado",
-}
-
-const estadoBadgeStyles: Record<EstadoProyecto, string> = {
-  propuesta: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  en_desarrollo: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  completado: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  cancelado: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
-}
-
-const estadoDot: Record<EstadoProyecto, string> = {
-  propuesta: "bg-orange-500",
-  en_desarrollo: "bg-blue-500",
-  completado: "bg-green-500",
-  cancelado: "bg-red-400",
-}
+import { proyectoEstadoBadge, proyectoEstadoLabel, proyectoEstadoDot } from "@/lib/constants"
 
 const nuevoPySchema = z.object({
   nombre: z.string().min(3, "Mínimo 3 caracteres"),
@@ -142,9 +121,9 @@ export default function ProyectosPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base leading-tight">{proyecto.nombre}</CardTitle>
-                  <Badge variant="outline" className={`shrink-0 flex items-center gap-1.5 ${estadoBadgeStyles[proyecto.estado]}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${estadoDot[proyecto.estado]}`} />
-                    {estadoLabels[proyecto.estado]}
+                  <Badge variant="outline" className={`shrink-0 flex items-center gap-1.5 ${proyectoEstadoBadge[proyecto.estado]}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${proyectoEstadoDot[proyecto.estado]}`} />
+                    {proyectoEstadoLabel[proyecto.estado]}
                   </Badge>
                 </div>
                 <CardDescription className="line-clamp-2">{proyecto.descripcion}</CardDescription>

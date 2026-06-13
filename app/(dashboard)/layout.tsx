@@ -4,23 +4,7 @@ import { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
-import type { UserRole } from "@/lib/types"
-
-const ROLE_HOME: Record<UserRole, string> = {
-  lider_ti: "/dashboard",
-  admin: "/dashboard-ejecutivo",
-  developer: "/mi-tablero",
-  staff: "/mis-solicitudes",
-}
-
-// Rutas exclusivas de un solo rol
-const EXCLUSIVE: Record<string, UserRole> = {
-  "/dashboard": "lider_ti",
-  "/dashboard-ejecutivo": "admin",
-  "/mi-tablero": "developer",
-  "/mis-solicitudes": "staff",
-  "/nuevo-ticket": "staff",
-}
+import { ROLE_HOME, EXCLUSIVE } from "@/lib/routes"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -40,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     const requiredRole = EXCLUSIVE[pathname]
     if (requiredRole && user.rol !== requiredRole) {
-      window.location.replace(ROLE_HOME[user.rol])
+      router.replace(ROLE_HOME[user.rol])
     }
   }, [user, isLoading, pathname, router])
 

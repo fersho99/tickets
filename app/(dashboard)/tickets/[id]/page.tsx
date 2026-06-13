@@ -12,29 +12,7 @@ import { useData } from "@/lib/data-context"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase"
 import type { Comentario, EstadoTicket } from "@/lib/types"
-
-const estadoBadgeStyles: Record<EstadoTicket, string> = {
-  en_revision: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-  aprobado: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  en_progreso: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  corregido: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  cerrado: "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/20",
-}
-
-const estadoLabels: Record<EstadoTicket, string> = {
-  en_revision: "En Revisión",
-  aprobado: "Aprobado",
-  en_progreso: "En Progreso",
-  corregido: "Corregido",
-  cerrado: "Cerrado",
-}
-
-const prioridadLabel: Record<number, string> = { 1: "Alta", 2: "Media", 3: "Baja" }
-const prioridadColor: Record<number, string> = {
-  1: "bg-red-500/15 text-red-600 border-red-500/20",
-  2: "bg-yellow-500/15 text-yellow-600 border-yellow-500/20",
-  3: "bg-gray-500/15 text-gray-600 border-gray-500/20",
-}
+import { ticketEstadoBadge, ticketEstadoLabel, prioridadBadge, prioridadLabel } from "@/lib/constants"
 
 export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -139,11 +117,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               <div className="flex items-start justify-between gap-4">
                 <CardTitle className="text-xl leading-tight">{ticket.titulo}</CardTitle>
                 <div className="flex gap-2 shrink-0">
-                  <Badge variant="outline" className={prioridadColor[ticket.prioridad]}>
+                  <Badge variant="outline" className={prioridadBadge[ticket.prioridad]}>
                     {prioridadLabel[ticket.prioridad]}
                   </Badge>
-                  <Badge variant="outline" className={estadoBadgeStyles[ticket.estado]}>
-                    {estadoLabels[ticket.estado]}
+                  <Badge variant="outline" className={ticketEstadoBadge[ticket.estado]}>
+                    {ticketEstadoLabel[ticket.estado]}
                   </Badge>
                 </div>
               </div>
@@ -257,7 +235,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               )}
               {canChangeState && !nextEstados[ticket.estado] && user?.rol !== "lider_ti" && (
                 <p className="text-xs text-center text-muted-foreground py-1">
-                  Ticket {estadoLabels[ticket.estado].toLowerCase()} · sin acciones pendientes
+                  Ticket {ticketEstadoLabel[ticket.estado].toLowerCase()} · sin acciones pendientes
                 </p>
               )}
             </CardContent>

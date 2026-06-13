@@ -23,43 +23,12 @@ import { useData } from "@/lib/data-context"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase"
 import type { EstadoProyecto, EstadoTicket } from "@/lib/types"
+import {
+  proyectoEstadoBadge, proyectoEstadoLabel,
+  ticketEstadoBadge, ticketEstadoLabel,
+  prioridadBadge, prioridadLabel,
+} from "@/lib/constants"
 
-const estadoBadgeStyles: Record<EstadoProyecto, string> = {
-  propuesta: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  en_desarrollo: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  completado: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  cancelado: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
-}
-
-const estadoLabels: Record<EstadoProyecto, string> = {
-  propuesta: "Propuesta",
-  en_desarrollo: "En Desarrollo",
-  completado: "Completado",
-  cancelado: "Cancelado",
-}
-
-const ticketEstadoStyles: Record<EstadoTicket, string> = {
-  en_revision: "bg-yellow-500/15 text-yellow-600 border-yellow-500/20",
-  aprobado: "bg-blue-500/15 text-blue-600 border-blue-500/20",
-  en_progreso: "bg-purple-500/15 text-purple-600 border-purple-500/20",
-  corregido: "bg-green-500/15 text-green-600 border-green-500/20",
-  cerrado: "bg-gray-500/15 text-gray-600 border-gray-500/20",
-}
-
-const ticketEstadoLabels: Record<EstadoTicket, string> = {
-  en_revision: "En Revisión",
-  aprobado: "Aprobado",
-  en_progreso: "En Progreso",
-  corregido: "Corregido",
-  cerrado: "Cerrado",
-}
-
-const prioridadLabels: Record<number, string> = { 1: "Alta", 2: "Media", 3: "Baja" }
-const prioridadStyles: Record<number, string> = {
-  1: "bg-red-500/15 text-red-600 border-red-500/20",
-  2: "bg-yellow-500/15 text-yellow-600 border-yellow-500/20",
-  3: "bg-gray-500/15 text-gray-600 border-gray-500/20",
-}
 
 export default function ProyectoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -174,8 +143,8 @@ export default function ProyectoDetailPage({ params }: { params: Promise<{ id: s
                   <CardTitle className="text-xl">{proyecto.nombre}</CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">{proyecto.descripcion}</p>
                 </div>
-                <Badge variant="outline" className={estadoBadgeStyles[proyecto.estado]}>
-                  {estadoLabels[proyecto.estado]}
+                <Badge variant="outline" className={proyectoEstadoBadge[proyecto.estado]}>
+                  {proyectoEstadoLabel[proyecto.estado]}
                 </Badge>
               </div>
             </CardHeader>
@@ -337,13 +306,13 @@ export default function ProyectoDetailPage({ params }: { params: Promise<{ id: s
                           </Link>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={prioridadStyles[t.prioridad]}>
-                            {prioridadLabels[t.prioridad]}
+                          <Badge variant="outline" className={prioridadBadge[t.prioridad]}>
+                            {prioridadLabel[t.prioridad]}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={ticketEstadoStyles[t.estado]}>
-                            {ticketEstadoLabels[t.estado]}
+                          <Badge variant="outline" className={ticketEstadoBadge[t.estado]}>
+                            {ticketEstadoLabel[t.estado]}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">{t.developer_nombre ?? "—"}</TableCell>

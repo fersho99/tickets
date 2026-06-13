@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useData } from "@/lib/data-context"
 import type { EstadoTicket, Ticket } from "@/lib/types"
+import { prioridadBadge, prioridadLabel } from "@/lib/constants"
 
 const COLUMNS: { id: EstadoTicket; label: string; color: string }[] = [
   { id: "aprobado", label: "Aprobado", color: "bg-blue-500" },
@@ -30,14 +31,6 @@ const NEXT_STATE: Partial<Record<EstadoTicket, EstadoTicket>> = {
   aprobado: "en_progreso",
   en_progreso: "corregido",
 }
-
-const prioridadColor: Record<number, string> = {
-  1: "bg-red-500/15 text-red-600 border-red-500/20",
-  2: "bg-yellow-500/15 text-yellow-600 border-yellow-500/20",
-  3: "bg-gray-500/15 text-gray-600 border-gray-500/20",
-}
-
-const prioridadLabel: Record<number, string> = { 1: "Alta", 2: "Media", 3: "Baja" }
 
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id })
@@ -83,7 +76,7 @@ function KanbanCard({ ticket, overlay = false }: { ticket: Ticket; overlay?: boo
                   {ticket.descripcion}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="outline" className={`text-[10px] ${prioridadColor[ticket.prioridad]}`}>
+                  <Badge variant="outline" className={`text-[10px] ${prioridadBadge[ticket.prioridad]}`}>
                     {prioridadLabel[ticket.prioridad]}
                   </Badge>
                   <span className="text-[10px] text-muted-foreground capitalize">{ticket.tipo}</span>

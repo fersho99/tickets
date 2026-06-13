@@ -4,13 +4,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { LoginScreen } from "@/components/dashboard/login-screen"
-
-const ROLE_HOME: Record<string, string> = {
-  lider_ti: "/dashboard",
-  admin: "/dashboard-ejecutivo",
-  developer: "/mi-tablero",
-  staff: "/mis-solicitudes",
-}
+import { ROLE_HOME } from "@/lib/routes"
 
 export default function LoginPage() {
   const { user, isLoading } = useAuth()
@@ -23,7 +17,6 @@ export default function LoginPage() {
         ? sessionStorage.getItem("returnUrl")
         : null
       if (returnUrl) sessionStorage.removeItem("returnUrl")
-      // Only use returnUrl if it doesn't belong to another role's home
       const otherHomes = Object.values(ROLE_HOME).filter((r) => r !== home)
       const safeReturn = returnUrl && !otherHomes.includes(returnUrl) ? returnUrl : null
       router.replace(safeReturn ?? home)

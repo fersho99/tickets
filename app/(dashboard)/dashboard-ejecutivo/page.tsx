@@ -17,21 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { useData } from "@/lib/data-context"
-import type { EstadoProyecto } from "@/lib/types"
-
-const estadoLabels: Record<EstadoProyecto, string> = {
-  propuesta: "Propuesta",
-  en_desarrollo: "En Desarrollo",
-  completado: "Completado",
-  cancelado: "Cancelado",
-}
-
-const estadoBadgeStyles: Record<EstadoProyecto, string> = {
-  propuesta: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  en_desarrollo: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  completado: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  cancelado: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
-}
+import { proyectoEstadoBadge, proyectoEstadoLabel } from "@/lib/constants"
 
 export default function DashboardEjecutivoPage() {
   const { proyectos, updateProyecto, tickets } = useData()
@@ -158,8 +144,8 @@ export default function DashboardEjecutivoPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-sm leading-tight">{proyecto.nombre}</CardTitle>
-                    <Badge variant="outline" className={`shrink-0 ${estadoBadgeStyles[proyecto.estado]}`}>
-                      {estadoLabels[proyecto.estado]}
+                    <Badge variant="outline" className={`shrink-0 ${proyectoEstadoBadge[proyecto.estado]}`}>
+                      {proyectoEstadoLabel[proyecto.estado]}
                     </Badge>
                   </div>
                 </CardHeader>

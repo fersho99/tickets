@@ -9,23 +9,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts"
 import { useData } from "@/lib/data-context"
-import type { EstadoTicket, Ticket } from "@/lib/types"
-
-const estadoBadgeStyles: Record<EstadoTicket, string> = {
-  en_revision: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-  aprobado: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  en_progreso: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  corregido: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/20",
-  cerrado: "bg-gray-500/15 text-gray-600 dark:text-gray-400 border-gray-500/20",
-}
-
-const estadoLabels: Record<EstadoTicket, string> = {
-  en_revision: "En Revisión",
-  aprobado: "Aprobado",
-  en_progreso: "En Progreso",
-  corregido: "Corregido",
-  cerrado: "Cerrado",
-}
+import type { Ticket } from "@/lib/types"
+import { ticketEstadoBadge, ticketEstadoLabel } from "@/lib/constants"
 
 function getWeeklyTickets(tickets: Ticket[]) {
   const now = new Date()
@@ -187,8 +172,8 @@ export default function DashboardPage() {
                     <p className="truncate text-sm font-medium">{ticket.titulo}</p>
                     <p className="text-xs text-muted-foreground">{ticket.solicitante_nombre}</p>
                   </div>
-                  <Badge variant="outline" className={`ml-2 shrink-0 ${estadoBadgeStyles[ticket.estado]}`}>
-                    {estadoLabels[ticket.estado]}
+                  <Badge variant="outline" className={`ml-2 shrink-0 ${ticketEstadoBadge[ticket.estado]}`}>
+                    {ticketEstadoLabel[ticket.estado]}
                   </Badge>
                 </Link>
               ))}
