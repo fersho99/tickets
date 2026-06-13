@@ -2,21 +2,20 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Sparkles, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Sparkles, Eye, EyeOff, CheckCircle2, Lock } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase"
 
 const confirmSchema = z
   .object({
-    nombre: z.string().min(2, "Mínimo 2 caracteres"),
-    password: z.string().min(8, "Mínimo 8 caracteres"),
+    password:        z.string().min(8, "Mínimo 8 caracteres"),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -26,65 +25,104 @@ const confirmSchema = z
 
 type ConfirmForm = z.infer<typeof confirmSchema>
 
+const ROL_LABELS: Record<string, string> = {
+  lider_ti:  "Líder de TI",
+  admin:     "Administrador",
+  developer: "Desarrollador",
+  staff:     "Staff",
+}
+
+interface PerfilData {
+  nombre:  string
+  rol:     string
+  empresa: string | null
+}
+
 export default function ConfirmPage() {
   const router = useRouter()
-  const [email, setEmail] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [linkError, setLinkError] = useState<string | null>(null)
+  const [email,       setEmail]       = useState<string | null>(null)
+  const [perfil,      setPerfil]      = useState<PerfilData | null>(null)
+  const [userId,      setUserId]      = useState<string | null>(null)
+  const [loading,     setLoading]     = useState(true)
+  const [linkError,   setLinkError]   = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
-  const [showPass, setShowPass] = useState(false)
+  const [done,        setDone]        = useState(false)
+  const [showPass,    setShowPass]    = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ConfirmForm>({ resolver: zodResolver(confirmSchema) })
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ConfirmForm>({
+    resolver: zodResolver(confirmSchema),
+  })
 
   useEffect(() => {
     const supabase = createClient()
 
     const exchangeToken = async () => {
-      // 1. Implicit flow: Supabase redirects with #access_token=...&refresh_token=... in hash
+      let uid: string | null = null
+
+      // 1. Implicit flow
       const hash = window.location.hash
       if (hash && hash.includes("access_token")) {
         const hashParams = new URLSearchParams(hash.substring(1))
-        const accessToken = hashParams.get("access_token")
+        const accessToken  = hashParams.get("access_token")
         const refreshToken = hashParams.get("refresh_token")
-
         if (accessToken && refreshToken) {
           const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+            access_token: accessToken, refresh_token: refreshToken,
           })
-          if (!error && data.session?.user?.email) {
-            setEmail(data.session.user.email)
-            setLoading(false)
-            return
+          if (!error && data.session?.user) {
+            setEmail(data.session.user.email ?? null)
+            uid = data.session.user.id
           }
         }
       }
 
-      // 2. PKCE flow: token_hash + type as query params
-      const params = new URLSearchParams(window.location.search)
-      const tokenHash = params.get("token_hash")
-      const type = params.get("type")
-
-      if (tokenHash && type) {
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          type: type as any,
-        })
-        if (!error && data.session?.user?.email) {
-          setEmail(data.session.user.email)
-          setLoading(false)
-          return
+      // 2. PKCE flow
+      if (!uid) {
+        const params    = new URLSearchParams(window.location.search)
+        const tokenHash = params.get("token_hash")
+        const type      = params.get("type")
+        if (tokenHash && type) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            type: type as any,
+          })
+          if (!error && data.session?.user) {
+            setEmail(data.session.user.email ?? null)
+            uid = data.session.user.id
+          }
         }
       }
 
-      setLinkError("El enlace de activación no es válido o ha expirado.")
+      if (!uid) {
+        setLinkError("El enlace de activación no es válido o ha expirado.")
+        setLoading(false)
+        return
+      }
+
+      setUserId(uid)
+
+      // 3. Obtener datos del perfil (nombre, rol, empresa)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("nombre, rol, empresa:empresas(nombre)")
+        .eq("id", uid)
+        .single()
+
+      if (profileData) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const raw = profileData.empresa as any
+        const empresaNombre: string | null = Array.isArray(raw)
+          ? (raw[0]?.nombre ?? null)
+          : (raw?.nombre ?? null)
+        setPerfil({
+          nombre:  profileData.nombre ?? "",
+          rol:     profileData.rol    ?? "",
+          empresa: empresaNombre,
+        })
+      }
+
       setLoading(false)
     }
 
@@ -95,18 +133,14 @@ export default function ConfirmPage() {
     setSubmitError(null)
     const supabase = createClient()
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: data.password,
-      data: { nombre: data.nombre },
-    })
+    const { error: updateError } = await supabase.auth.updateUser({ password: data.password })
     if (updateError) {
       setSubmitError(updateError.message)
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from("profiles").update({ nombre: data.nombre, activo: true }).eq("id", user.id)
+    if (userId) {
+      await supabase.from("profiles").update({ activo: true }).eq("id", userId)
     }
 
     setDone(true)
@@ -114,7 +148,6 @@ export default function ConfirmPage() {
     setTimeout(() => router.push("/login"), 2200)
   }
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -123,7 +156,6 @@ export default function ConfirmPage() {
     )
   }
 
-  // ── Invalid link ──────────────────────────────────────────────────────────
   if (linkError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -139,7 +171,6 @@ export default function ConfirmPage() {
     )
   }
 
-  // ── Success ───────────────────────────────────────────────────────────────
   if (done) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -156,7 +187,6 @@ export default function ConfirmPage() {
     )
   }
 
-  // ── Form ──────────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-6">
@@ -178,23 +208,39 @@ export default function ConfirmPage() {
               <span className="font-medium text-foreground">{email}</span>
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="nombre">Nombre completo</Label>
-                <Input
-                  id="nombre"
-                  placeholder="Ej. María García"
-                  autoComplete="name"
-                  {...register("nombre")}
-                />
-                {errors.nombre && (
-                  <p className="text-xs text-destructive">{errors.nombre.message}</p>
+          <CardContent className="space-y-5">
+
+            {/* Información pre-llenada (solo lectura) */}
+            <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Tu información (asignada por el administrador)
+              </p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Nombre</p>
+                  <p className="font-medium">{perfil?.nombre || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Rol</p>
+                  <Badge variant="outline">
+                    {ROL_LABELS[perfil?.rol ?? ""] ?? perfil?.rol ?? "—"}
+                  </Badge>
+                </div>
+                {perfil?.empresa && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground mb-0.5">Empresa</p>
+                    <p className="font-medium">{perfil.empresa}</p>
+                  </div>
                 )}
               </div>
+            </div>
 
+            {/* Solo contraseña */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="password">Contraseña nueva</Label>
+                <label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5" /> Contraseña nueva
+                </label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -204,10 +250,9 @@ export default function ConfirmPage() {
                     {...register("password")}
                   />
                   <button
-                    type="button"
+                    type="button" tabIndex={-1}
                     onClick={() => setShowPass((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    tabIndex={-1}
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -218,7 +263,9 @@ export default function ConfirmPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                <label htmlFor="confirmPassword" className="text-sm font-medium">
+                  Confirmar contraseña
+                </label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -228,10 +275,9 @@ export default function ConfirmPage() {
                     {...register("confirmPassword")}
                   />
                   <button
-                    type="button"
+                    type="button" tabIndex={-1}
                     onClick={() => setShowConfirm((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    tabIndex={-1}
                   >
                     {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

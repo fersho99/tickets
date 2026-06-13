@@ -17,5 +17,4 @@ export const EXCLUSIVE: Record<string, UserRole[]> = {
   "/tickets":             ["lider_ti", "admin"],
   "/proyectos":           ["lider_ti", "admin"],
   "/reportes-ia":         ["admin"],
-  "/configuracion":       ["admin"],
 }

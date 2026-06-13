@@ -6,19 +6,21 @@ import { z } from "zod"
 
 const createUserSchema = z.object({
   nombre: z.string().min(2).max(100),
-  email: z.string().email(),
-  rol: z.enum(["lider_ti", "admin", "developer", "staff"]),
+  email:  z.string().email(),
+  rol:    z.enum(["lider_ti", "admin", "developer", "staff"]),
 })
 
+const ROLE_LIMITS: Record<string, number> = { admin: 2, lider_ti: 2 }
+
 function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  return createClient(url, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
 }
 
-async function getCallerRole(): Promise<string | null> {
+async function getCallerProfile(): Promise<{ rol: string; empresa_id: string | null } | null> {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,10 +40,10 @@ async function getCallerRole(): Promise<string | null> {
   if (!user) return null
   const { data } = await supabase
     .from("profiles")
-    .select("rol")
+    .select("rol, empresa_id")
     .eq("id", user.id)
     .single()
-  return data?.rol ?? null
+  return data ?? null
 }
 
 export async function POST(req: NextRequest) {
@@ -52,8 +54,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const callerRol = await getCallerRole()
-  if (!["lider_ti", "admin"].includes(callerRol ?? "")) {
+  const callerProfile = await getCallerProfile()
+  if (!callerProfile || !["lider_ti", "admin"].includes(callerProfile.rol)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
@@ -63,8 +65,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 })
   }
   const { nombre, email, rol } = parsed.data
+  const { empresa_id } = callerProfile
 
   const supabase = getAdminClient()
+
+  // Verificar límite de roles por empresa
+  if (empresa_id && ROLE_LIMITS[rol]) {
+    const { count } = await supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("empresa_id", empresa_id)
+      .eq("rol", rol)
+
+    if ((count ?? 0) >= ROLE_LIMITS[rol]) {
+      const label = rol === "admin" ? "administradores" : "líderes de TI"
+      return NextResponse.json(
+        { error: `Límite alcanzado: máximo ${ROLE_LIMITS[rol]} ${label} por empresa` },
+        { status: 400 }
+      )
+    }
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
   const { data: existingProfile, error: profileCheckError } = await supabase
@@ -83,7 +104,7 @@ export async function POST(req: NextRequest) {
     userId = existingProfile.id
     const { error: updateErr } = await supabase
       .from("profiles")
-      .update({ rol, nombre, activo: true })
+      .update({ rol, nombre, activo: true, empresa_id })
       .eq("id", userId)
     if (updateErr) console.error("[/api/users] profile update error:", updateErr)
   } else {
@@ -102,7 +123,7 @@ export async function POST(req: NextRequest) {
 
     const { error: upsertErr } = await supabase
       .from("profiles")
-      .upsert({ id: userId, email, rol, nombre, activo: true }, { onConflict: "id" })
+      .upsert({ id: userId, email, rol, nombre, activo: true, empresa_id }, { onConflict: "id" })
     if (upsertErr) console.error("[/api/users] profile upsert error:", upsertErr)
   }
 
@@ -129,8 +150,8 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY no configurada" }, { status: 500 })
   }
 
-  const callerRol = await getCallerRole()
-  if (!["lider_ti", "admin"].includes(callerRol ?? "")) {
+  const callerProfile = await getCallerProfile()
+  if (!callerProfile || !["lider_ti", "admin"].includes(callerProfile.rol)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 
