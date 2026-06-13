@@ -22,8 +22,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const requiredRole = EXCLUSIVE[pathname]
-    if (requiredRole && user.rol !== requiredRole) {
+    const allowedRoles = EXCLUSIVE[pathname]
+    if (allowedRoles && !allowedRoles.includes(user.rol)) {
       router.replace(ROLE_HOME[user.rol])
     }
   }, [user, isLoading, pathname, router])
@@ -37,6 +37,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) return null
+
+  const allowedRoles = EXCLUSIVE[pathname]
+  if (allowedRoles && !allowedRoles.includes(user.rol)) return null
 
   return <DashboardLayout>{children}</DashboardLayout>
 }

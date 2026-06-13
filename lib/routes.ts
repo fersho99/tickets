@@ -7,10 +7,15 @@ export const ROLE_HOME: Record<UserRole, string> = {
   staff: "/mis-solicitudes",
 }
 
-export const EXCLUSIVE: Record<string, UserRole> = {
-  "/dashboard": "lider_ti",
-  "/dashboard-ejecutivo": "admin",
-  "/mi-tablero": "developer",
-  "/mis-solicitudes": "staff",
-  "/nuevo-ticket": "staff",
+export const EXCLUSIVE: Record<string, UserRole[]> = {
+  "/dashboard":           ["lider_ti"],
+  "/dashboard-ejecutivo": ["admin"],
+  "/mi-tablero":          ["developer"],
+  "/mis-solicitudes":     ["staff"],
+  "/nuevo-ticket":        ["staff"],
+  "/asignar-tareas":      ["lider_ti"],
+  "/tickets":             ["lider_ti", "admin"],
+  "/proyectos":           ["lider_ti", "admin"],
+  "/reportes-ia":         ["admin"],
+  "/configuracion":       ["admin"],
 }
