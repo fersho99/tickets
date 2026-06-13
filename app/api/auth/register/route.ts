@@ -67,14 +67,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: createError.message }, { status: 400 })
   }
 
-  // 3. Actualizar perfil con empresa_id, rol y nombre
+  // 3. Crear/actualizar perfil con empresa_id, rol y nombre
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ rol, nombre, empresa_id: empresaData.id, activo: true })
-    .eq("id", data.user.id)
+    .upsert(
+      { id: data.user.id, email, rol, nombre, empresa_id: empresaData.id, activo: true },
+      { onConflict: "id" }
+    )
 
   if (profileError) {
-    console.error("[/api/auth/register] profile update error:", profileError)
+    console.error("[/api/auth/register] profile upsert error:", profileError)
   }
 
   return NextResponse.json({ success: true })
