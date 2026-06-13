@@ -18,6 +18,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const { id } = use(params)
   const { tickets, updateTicket, developers, perfiles } = useData()
   const { user } = useAuth()
+  const COMENTARIO_MAX = 500
   const [comentario, setComentario] = useState("")
   const [comentarios, setComentarios] = useState<Comentario[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -174,18 +175,24 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               {/* Input always visible, outside scroll area */}
               <div className="space-y-2 pt-2 border-t">
                 <Textarea
-                  placeholder="Añadir un comentario..."
+                  placeholder="Añadir un comentario... (mín. 5 caracteres)"
                   rows={3}
+                  maxLength={COMENTARIO_MAX}
                   value={comentario}
                   onChange={(e) => setComentario(e.target.value)}
                 />
-                <Button
-                  size="sm"
-                  onClick={handleAddComentario}
-                  disabled={!comentario.trim() || submitting}
-                >
-                  {submitting ? "Enviando..." : "Comentar"}
-                </Button>
+                <div className="flex items-center justify-between">
+                  <Button
+                    size="sm"
+                    onClick={handleAddComentario}
+                    disabled={comentario.trim().length < 5 || submitting}
+                  >
+                    {submitting ? "Enviando..." : "Comentar"}
+                  </Button>
+                  <span className={`text-xs ${comentario.length > COMENTARIO_MAX * 0.9 ? "text-destructive" : "text-muted-foreground"}`}>
+                    {comentario.length}/{COMENTARIO_MAX}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

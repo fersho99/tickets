@@ -26,10 +26,13 @@ import { useData } from "@/lib/data-context"
 import { useAuth } from "@/lib/auth-context"
 import { proyectoEstadoBadge, proyectoEstadoLabel, proyectoEstadoDot } from "@/lib/constants"
 
+const PROYECTO_NOMBRE_MAX = 50
+const PROYECTO_DESC_MAX   = 500
+
 const nuevoPySchema = z.object({
-  nombre: z.string().min(3, "Mínimo 3 caracteres"),
-  descripcion: z.string().min(10, "Mínimo 10 caracteres"),
-  estado: z.enum(["propuesta", "en_desarrollo"]),
+  nombre:      z.string().min(10, "Mínimo 10 caracteres").max(PROYECTO_NOMBRE_MAX, `Máximo ${PROYECTO_NOMBRE_MAX} caracteres`),
+  descripcion: z.string().min(20, "Mínimo 20 caracteres").max(PROYECTO_DESC_MAX, `Máximo ${PROYECTO_DESC_MAX} caracteres`),
+  estado:      z.enum(["propuesta", "en_desarrollo"]),
 })
 
 type NuevoProyectoForm = z.infer<typeof nuevoPySchema>
@@ -39,10 +42,14 @@ export default function ProyectosPage() {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<NuevoProyectoForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<NuevoProyectoForm>({
     resolver: zodResolver(nuevoPySchema),
+    mode: "onChange",
     defaultValues: { estado: "propuesta" },
   })
+
+  const proyNombre = watch("nombre")      ?? ""
+  const proyDesc   = watch("descripcion") ?? ""
 
   const onSubmit = (data: NuevoProyectoForm) => {
     addProyecto({
@@ -83,13 +90,23 @@ export default function ProyectosPage() {
               </DialogHeader>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
                 <div className="space-y-1">
-                  <Label htmlFor="nombre">Nombre</Label>
-                  <Input id="nombre" placeholder="Nombre del proyecto" {...register("nombre")} />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="nombre">Nombre</Label>
+                    <span className={`text-xs ${proyNombre.length > PROYECTO_NOMBRE_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                      {proyNombre.length}/{PROYECTO_NOMBRE_MAX}
+                    </span>
+                  </div>
+                  <Input id="nombre" placeholder="Nombre del proyecto" maxLength={PROYECTO_NOMBRE_MAX} {...register("nombre")} />
                   {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="descripcion">Descripción</Label>
-                  <Textarea id="descripcion" rows={3} placeholder="Describe el proyecto..." {...register("descripcion")} />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="descripcion">Descripción</Label>
+                    <span className={`text-xs ${proyDesc.length > PROYECTO_DESC_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                      {proyDesc.length}/{PROYECTO_DESC_MAX}
+                    </span>
+                  </div>
+                  <Textarea id="descripcion" rows={3} placeholder="Describe el proyecto..." maxLength={PROYECTO_DESC_MAX} {...register("descripcion")} />
                   {errors.descripcion && <p className="text-xs text-destructive">{errors.descripcion.message}</p>}
                 </div>
                 <div className="space-y-1">

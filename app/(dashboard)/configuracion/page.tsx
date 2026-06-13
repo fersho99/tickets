@@ -31,14 +31,14 @@ import { createClient } from "@/lib/supabase"
 import type { UserRole } from "@/lib/types"
 
 const perfilSchema = z.object({
-  nombre: z.string().min(2, "Mínimo 2 caracteres"),
-  email: z.string().email("Email inválido"),
+  nombre: z.string().min(10, "Mínimo 10 caracteres").max(60, "Máximo 60 caracteres"),
+  email:  z.string().email("Email inválido").max(50, "Máximo 50 caracteres"),
 })
 
 const nuevoUsuarioSchema = z.object({
-  nombre: z.string().min(2, "Mínimo 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  rol: z.enum(["lider_ti", "admin", "developer", "staff"]),
+  nombre: z.string().min(10, "Mínimo 10 caracteres").max(60, "Máximo 60 caracteres"),
+  email:  z.string().email("Email inválido").max(50, "Máximo 50 caracteres"),
+  rol:    z.enum(["lider_ti", "admin", "developer", "staff"]),
 })
 
 type PerfilForm = z.infer<typeof perfilSchema>

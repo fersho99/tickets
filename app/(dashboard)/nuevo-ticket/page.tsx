@@ -25,11 +25,14 @@ import { useAuth } from "@/lib/auth-context"
 import { useData } from "@/lib/data-context"
 import type { TipoTicket } from "@/lib/types"
 
+const TITULO_MAX = 50
+const DESC_MAX   = 500
+
 const ticketSchema = z.object({
-  titulo: z.string().min(10, "El título debe tener al menos 10 caracteres"),
-  descripcion: z.string().min(20, "La descripción debe tener al menos 20 caracteres"),
-  tipo: z.enum(["soporte", "mantenimiento"] as const, { required_error: "Selecciona un tipo" }),
-  prioridad: z.enum(["1", "2", "3"] as const).default("2"),
+  titulo:      z.string().min(10, "El título debe tener al menos 10 caracteres").max(TITULO_MAX, `Máximo ${TITULO_MAX} caracteres`),
+  descripcion: z.string().min(20, "La descripción debe tener al menos 20 caracteres").max(DESC_MAX, `Máximo ${DESC_MAX} caracteres`),
+  tipo:        z.enum(["soporte", "mantenimiento"] as const, { required_error: "Selecciona un tipo" }),
+  prioridad:   z.enum(["1", "2", "3"] as const).default("2"),
   proyecto_id: z.string().optional(),
 })
 
@@ -52,11 +55,16 @@ export default function NuevoTicketPage() {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<TicketForm>({
     resolver: zodResolver(ticketSchema),
+    mode: "onChange",
     defaultValues: { prioridad: "2" },
   })
+
+  const tituloVal      = watch("titulo")      ?? ""
+  const descripcionVal = watch("descripcion") ?? ""
 
   const onSubmit = (data: TicketForm) => {
     setPendingData(data)
@@ -106,12 +114,18 @@ export default function NuevoTicketPage() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-1.5">
-                <Label htmlFor="titulo">
-                  Título <span className="text-destructive">*</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="titulo">
+                    Título <span className="text-destructive">*</span>
+                  </Label>
+                  <span className={`text-xs ${tituloVal.length > TITULO_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                    {tituloVal.length}/{TITULO_MAX}
+                  </span>
+                </div>
                 <Input
                   id="titulo"
                   placeholder="Describe brevemente el problema (mín. 10 caracteres)"
+                  maxLength={TITULO_MAX}
                   {...register("titulo")}
                 />
                 {errors.titulo && (
@@ -120,13 +134,19 @@ export default function NuevoTicketPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="descripcion">
-                  Descripción <span className="text-destructive">*</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="descripcion">
+                    Descripción <span className="text-destructive">*</span>
+                  </Label>
+                  <span className={`text-xs ${descripcionVal.length > DESC_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                    {descripcionVal.length}/{DESC_MAX}
+                  </span>
+                </div>
                 <Textarea
                   id="descripcion"
                   rows={5}
                   placeholder="Proporciona todos los detalles posibles sobre tu solicitud (mín. 20 caracteres)"
+                  maxLength={DESC_MAX}
                   {...register("descripcion")}
                 />
                 {errors.descripcion && (

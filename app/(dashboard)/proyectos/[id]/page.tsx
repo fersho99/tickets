@@ -84,8 +84,11 @@ export default function ProyectoDetailPage({ params }: { params: Promise<{ id: s
     )
   }
 
+  const TAREA_TITULO_MAX = 50
+  const TAREA_DESC_MAX   = 500
+
   const handleCrearTarea = async () => {
-    if (!tarea.titulo.trim() || !tarea.developer_id) return
+    if (tarea.titulo.trim().length < 10 || !tarea.developer_id) return
     setTareaLoading(true)
     setTareaError("")
     const supabase = createClient()
@@ -203,18 +206,33 @@ export default function ProyectoDetailPage({ params }: { params: Promise<{ id: s
                       <DialogHeader><DialogTitle>Nueva Tarea</DialogTitle></DialogHeader>
                       <div className="space-y-4 pt-1">
                         <div className="space-y-1.5">
-                          <Label>Título <span className="text-destructive">*</span></Label>
+                          <div className="flex items-center justify-between">
+                            <Label>Título <span className="text-destructive">*</span></Label>
+                            <span className={`text-xs ${tarea.titulo.length > TAREA_TITULO_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                              {tarea.titulo.length}/{TAREA_TITULO_MAX}
+                            </span>
+                          </div>
                           <Input
                             placeholder="Ej. Implementar módulo de pagos"
+                            maxLength={TAREA_TITULO_MAX}
                             value={tarea.titulo}
                             onChange={(e) => setTarea((t) => ({ ...t, titulo: e.target.value }))}
                           />
+                          {tarea.titulo.trim().length > 0 && tarea.titulo.trim().length < 10 && (
+                            <p className="text-xs text-destructive">Mínimo 10 caracteres</p>
+                          )}
                         </div>
                         <div className="space-y-1.5">
-                          <Label>Descripción</Label>
+                          <div className="flex items-center justify-between">
+                            <Label>Descripción</Label>
+                            <span className={`text-xs ${tarea.descripcion.length > TAREA_DESC_MAX ? "text-destructive" : "text-muted-foreground"}`}>
+                              {tarea.descripcion.length}/{TAREA_DESC_MAX}
+                            </span>
+                          </div>
                           <Textarea
                             placeholder="Detalla qué debe hacer el developer..."
                             rows={3}
+                            maxLength={TAREA_DESC_MAX}
                             value={tarea.descripcion}
                             onChange={(e) => setTarea((t) => ({ ...t, descripcion: e.target.value }))}
                           />
@@ -270,7 +288,7 @@ export default function ProyectoDetailPage({ params }: { params: Promise<{ id: s
                           </Button>
                           <Button
                             className="flex-1"
-                            disabled={!tarea.titulo.trim() || !tarea.developer_id || tareaLoading}
+                            disabled={tarea.titulo.trim().length < 10 || !tarea.developer_id || tareaLoading}
                             onClick={handleCrearTarea}
                           >
                             {tareaLoading ? "Creando..." : "Crear Tarea"}

@@ -20,8 +20,8 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 
 const schema = z.object({
-  email: z.string().email("Ingresa un email válido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  email:    z.string().email("Ingresa un email válido").max(50, "Máximo 50 caracteres"),
+  password: z.string().min(6, "Mínimo 6 caracteres").max(50, "Máximo 50 caracteres"),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -33,6 +33,7 @@ export function LoginScreen() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: { email: "", password: "" },
   })
 
@@ -67,6 +68,7 @@ export function LoginScreen() {
                         type="email"
                         placeholder="usuario@empresa.com"
                         autoComplete="email"
+                        maxLength={50}
                         {...field}
                       />
                     </FormControl>

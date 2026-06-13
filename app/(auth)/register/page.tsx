@@ -19,11 +19,11 @@ import {
 
 const schema = z
   .object({
-    empresa:         z.string().min(2, "Mínimo 2 caracteres"),
-    nombre:          z.string().min(2, "Mínimo 2 caracteres"),
+    empresa:         z.string().min(2, "Mínimo 2 caracteres").max(50, "Máximo 50 caracteres"),
+    nombre:          z.string().min(2, "Mínimo 2 caracteres").max(50, "Máximo 50 caracteres"),
     rol:             z.enum(["admin", "lider_ti"]),
-    email:           z.string().email("Ingresa un email válido"),
-    password:        z.string().min(8, "Mínimo 8 caracteres"),
+    email:           z.string().email("Ingresa un email válido").max(50, "Máximo 50 caracteres"),
+    password:        z.string().min(8, "Mínimo 8 caracteres").max(50, "Máximo 50 caracteres"),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
