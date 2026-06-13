@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     userId = existingProfile.id
     const { error: updateErr } = await supabase
       .from("profiles")
-      .update({ rol, nombre })
+      .update({ rol, nombre, activo: true })
       .eq("id", userId)
     if (updateErr) console.error("[/api/users] profile update error:", updateErr)
   } else {
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     const { error: upsertErr } = await supabase
       .from("profiles")
-      .upsert({ id: userId, email, rol, nombre }, { onConflict: "id" })
+      .upsert({ id: userId, email, rol, nombre, activo: true }, { onConflict: "id" })
     if (upsertErr) console.error("[/api/users] profile upsert error:", upsertErr)
   }
 

@@ -222,7 +222,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                   className="w-full"
                   onClick={() => updateTicket(ticket.id, { estado: nextEstados[ticket.estado]! })}
                 >
-                  Mover a: {estadoLabels[nextEstados[ticket.estado]!]}
+                  Mover a: {ticketEstadoLabel[nextEstados[ticket.estado]!]}
                 </Button>
               )}
               {user?.rol === "developer" && (

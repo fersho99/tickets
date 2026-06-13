@@ -106,7 +106,7 @@ export default function ConfirmPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from("profiles").update({ nombre: data.nombre }).eq("id", user.id)
+      await supabase.from("profiles").update({ nombre: data.nombre, activo: true }).eq("id", user.id)
     }
 
     setDone(true)
